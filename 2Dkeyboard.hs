@@ -58,18 +58,23 @@ instance Options MainOptions where
 
   {-- end argument parsing --}
 
+key _ = rectR 0.1 (-7,-7) (7,7)
+keyOutline enterP = if enterP
+                    then rectR 0.1 (-10,-20) (10,20) 
+                    else rectR 0.1 (-10,-10) (10,10)
+
 keySpace opts = optKeySep opts + 14
 fingerSpace opts = optFingerSep opts + 14
 minHeight opts = foldl1 min [0, optPointerHeight opts, optRingHeight opts, optPinkyHeight opts]
 
-keyColumn key opts = union $ map (flip translate $ key) [(0, 0 - keySpace opts), (0, 0), (0, keySpace opts)]
+keyColumn key opts = union $ map (flip translate $ key False) [(0, 0 - keySpace opts), (0, 0), (0, keySpace opts)]
 
-thumbKeys key opts = union [ translate (keySpace opts, 0 - keySpace opts / 2) key,
-                             translate (0, 0 - keySpace opts / 2) key,
-                             translate (0, keySpace opts) key,
+thumbKeys key opts = union [ translate (keySpace opts, 0 - keySpace opts / 2) $ key True,
+                             translate (0, 0 - keySpace opts / 2) $ key True,
+                             translate (0, keySpace opts) $ key False,
                              translate (0 - keySpace opts, 0) $ keyColumn key opts]
 
-fingerKeys key opts = union $ map (flip translate $ keyColumn key opts) [(0, optPointerHeight opts),
+fingerKeys key opts = union $ map (flip translate $ keyColumn key  opts) [(0, optPointerHeight opts),
                                                                          (keySpace opts, optPointerHeight opts),
                                                                          (keySpace opts + fingerSpace opts, 0),
                                                                          (keySpace opts + 2 * fingerSpace opts, optRingHeight opts),
@@ -77,8 +82,8 @@ fingerKeys key opts = union $ map (flip translate $ keyColumn key opts) [(0, opt
 
 translateThumbs opts = translate (0, -55 - 1.5 * keySpace opts) . rotate ( optThumbAngle opts )
 
-rightFragment rad frag opts = translate (optHandSep opts, 0) $ unionR rad $ map (rotate $ optHandAngle opts)  frag 
-leftFragment  rad frag opts = scale (-1,1) $ unionR rad $ map (rotate $ optHandAngle opts)  frag 
+rightFragment rad frag opts = translate (optHandSep opts, 0) $ unionR rad $ map (rotate $ optHandAngle opts) frag 
+leftFragment  rad frag opts = scale (-1,1) $ unionR rad $ map (rotate $ optHandAngle opts) frag 
 
 defrag rad opts lst = union [rightFragment rad lst opts, leftFragment rad lst opts]
 
@@ -109,20 +114,17 @@ backplane opts = unionR 5 [defrag 5 opts $ backplaneFragment opts,
 
 boltHoles opts = defrag 0 opts $ boltHoleFragment opts
 
-key = rectR 0.1 (-7,-7) (7,7)
-
 {-- make Figures and outFiles are zipped below, to match models with filenames. There sizes must match --}
 
 makeFigures opts = [ difference [union [shell (optBorderWidth opts) $ backplane opts, backplane opts], keyMatrix key opts, boltHoles opts], 
+                     difference [union [shell (optBorderWidth opts) $ backplane opts, backplane opts], keyMatrix keyOutline opts, boltHoles opts], 
                      difference [shell (optBorderWidth opts) $ backplane opts, boltHoles opts] ,
                      difference [union [shell (optBorderWidth opts) $ backplane opts, backplane opts], boltHoles opts] ]
 
-outFiles = ["top", "shell", "bottom"]
+outFiles = ["top", "dust-guard", "shell", "bottom"]
 
 makeFiles outFunc extension opts =
-  sequence_ $ map (\(x,y) -> outFunc 1 x y) $
-  zip (map (\x->optDir opts ++ "/" ++ x ++ extension) outFiles )
-      (makeFigures opts)
+  sequence_ $ map (\(x,y) -> outFunc 1 x y) $ zip (map (\x->optDir opts ++ "/" ++ x ++ extension) outFiles ) (makeFigures opts)
 
 main = runCommand $ \opts args -> do
   print opts
