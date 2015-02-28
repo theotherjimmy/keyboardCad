@@ -1,4 +1,4 @@
-#!/usr/bin/ghci
+#!/usr/bin/runghc
 import Graphics.Implicit.Primitives
 import Graphics.Implicit.Export
 import Control.Applicative
