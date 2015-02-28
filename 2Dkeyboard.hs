@@ -58,20 +58,24 @@ instance Options MainOptions where
 
   {-- end argument parsing --}
 
+data Key = Normal
+         | Enter
+           deriving (Show, Eq)
+
 key _ = rectR 0.1 (-7,-7) (7,7)
-keyOutline enterP = if enterP
-                    then rectR 0.1 (-10,-20) (10,20) 
-                    else rectR 0.1 (-10,-10) (10,10)
+                    
+keyOutline Enter = rectR 0.1 (-10,-20) (10,20) 
+keyOutline Normal = rectR 0.1 (-10,-10) (10,10)
 
 keySpace opts = optKeySep opts + 14
 fingerSpace opts = optFingerSep opts + 14
 minHeight opts = foldl1 min [0, optPointerHeight opts, optRingHeight opts, optPinkyHeight opts]
 
-keyColumn key opts = union $ map (flip translate $ key False) [(0, 0 - keySpace opts), (0, 0), (0, keySpace opts)]
+keyColumn key opts = union $ map (flip translate $ key Normal) [(0, 0 - keySpace opts), (0, 0), (0, keySpace opts)]
 
-thumbKeys key opts = union [ translate (keySpace opts, 0 - keySpace opts / 2) $ key True,
-                             translate (0, 0 - keySpace opts / 2) $ key True,
-                             translate (0, keySpace opts) $ key False,
+thumbKeys key opts = union [ translate (keySpace opts, 0 - keySpace opts / 2) $ key Enter,
+                             translate (0, 0 - keySpace opts / 2) $ key Enter,
+                             translate (0, keySpace opts) $ key Normal,
                              translate (0 - keySpace opts, 0) $ keyColumn key opts]
 
 fingerKeys key opts = union $ map (flip translate $ keyColumn key  opts) [(0, optPointerHeight opts),
