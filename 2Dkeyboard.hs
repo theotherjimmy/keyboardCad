@@ -120,10 +120,15 @@ boltHoles opts = defrag 0 opts $ boltHoleFragment opts
 
 {-- make Figures and outFiles are zipped below, to match models with filenames. There sizes must match --}
 
-makeFigures opts = [ difference [union [shell (optBorderWidth opts) $ backplane opts, backplane opts], keyMatrix key opts, boltHoles opts], 
-                     difference [union [shell (optBorderWidth opts) $ backplane opts, backplane opts], keyMatrix keyOutline opts, boltHoles opts], 
-                     difference [shell (optBorderWidth opts) $ backplane opts, boltHoles opts] ,
-                     difference [union [shell (optBorderWidth opts) $ backplane opts, backplane opts], boltHoles opts] ]
+
+makeFigures opts = let kbdShell = shell (optBorderWidth opts) $ backplane opts 
+                       back     = backplane opts
+                       plate    = union [kbdShell , back]
+                       holes    = boltHoles opts
+                   in [ difference [plate, keyMatrix key opts, holes], 
+                        difference [plate, keyMatrix keyOutline opts, holes], 
+                        difference [kbdShell, holes] ,
+                        difference [plate, holes] ]
 
 outFiles = ["top", "dust-guard", "shell", "bottom"]
 
